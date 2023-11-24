@@ -1,5 +1,16 @@
 const inquirer = require('inquirer');
 const mysql = require('mysql2');
+require('dotenv').config();
+
+const db = mysql.createConnection(
+    {
+        host: process.env.host,
+        user: process.env.user,
+        password: process.env.password,
+        database: process.env.database
+    },
+    console.log(`Connected to ${process.env.database}`)
+);
 
 function init() {
     inquirer.prompt([
