@@ -1,20 +1,12 @@
-version: '3'
-
+version: '3.4'
 services:
-  mysql:
-    image: mysql:latest
-    env_file:
-      - .env
-    environment:
-      MYSQL_ROOT_PASSWORD: '${MYSQL_ROOT_PASSWORD}'
+  mysql_container:
+    image: mysql
+    restart: always
     ports:
-      - "${port}:3307"
-  
+      - "3306:3306"
   phpmyadmin:
-    image: arm64v8/phpmyadmin
-    env_file:
-      - .env
+    image: phpmyadmin/phpmyadmin
+    restart: always
     ports:
       - "8080:80"
-    depends_on:
-      - mysql
