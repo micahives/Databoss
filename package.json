@@ -6,11 +6,6 @@
     "mysql2": "^3.6.5"
   },
   "scripts": {
-    "mysql:down": "docker-compose -f mysql.yml down",
-    "mysql:stop": "docker-compose -f mysql.yml stop",
-    "mysql:start": "docker-compose -f mysql.yml start",
-    "mysql:up": "docker-compose -f mysql.yml up -d",
-    "mysql:reset": "npm run mysql:down && npm run mysql:up",
-    "mysql": "mysql -u root -p -h 127.0.0.1 -P 3306"
+    "start": "node index.js"
   }
 }
