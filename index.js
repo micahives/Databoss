@@ -25,7 +25,7 @@ async function connectToDatabase() {
     return db;
 }
 
-// start program and logic to keep inquirer prompts going while the user doesn't select 'Exit'
+// start program and logic to keep inquirer prompts going until the user selects 'Exit'
 async function init() {
     try {
         const db = await connectToDatabase();
@@ -239,74 +239,11 @@ async function addEmployee() {
     try {
         const db = await connectToDatabase();
 
-        // array of role objects to later map a user selected role ID
-        const roles = [
-              {
-                "id": 1,
-                "name": "HR Manager"
-              },
-              {
-                "id": 2,
-                "name": "Recruiter"
-              },
-              {
-                "id": 3,
-                "name": "Training Specialist"
-              },
-              {
-                "id": 4,
-                "name": "Software Engineer"
-              },
-              {
-                "id": 5,
-                "name": "Senior Software Engineer"
-              },
-              {
-                "id": 6,
-                "name": "Systems Architect"
-              },
-              {
-                "id": 7,
-                "name": "Marketing Specialist"
-              },
-              {
-                "id": 8,
-                "name": "Marketing Manager"
-              },
-              {
-                "id": 9,
-                "name": "Social Media Coordinator"
-              },
-              {
-                "id": 10,
-                "name": "Financial Analyst"
-              },
-              {
-                "id": 11,
-                "name": "Controller"
-              },
-              {
-                "id": 12,
-                "name": "Auditor"
-              },
-              {
-                "id": 13,
-                "name": "Sales Representative"
-              },
-              {
-                "id": 14,
-                "name": "Account Executive"
-              },
-              {
-                "id": 15,
-                "name": "Sales Manager"
-              }
-        ];
-
+        const roles = await getRoles(db);
         const managers = await getManagers(db);
 
         const roleChoices = roles.map(role => role.name);
-        managerChoices = managers.map(manager => manager.full_name);
+        const managerChoices = managers.map(manager => manager.full_name);
 
         const userInput = await inquirer.prompt([
             {
@@ -353,6 +290,50 @@ async function addEmployee() {
     }
 }
 
+// functional query to update employee role
+async function updateRole() {
+    try {
+        const db = await connectToDatabase();
+
+        const employees = await getEmployees(db);
+        const roles = await getRoles(db);
+
+        const roleChoices = roles.map(role => role.name);
+        const employeeChoices = employees.map(employee => employee.full_name);
+
+        const userInput = await inquirer.prompt([
+            {
+                type: 'list',
+                name: 'updateEmp',
+                message: "Choose an employee to update",
+                choices: employeeChoices
+            },
+            {
+                type: 'list',
+                name: 'updateRole',
+                message: "Choose a new role for the employee",
+                choices: roleChoices
+            }
+        ]);
+
+        const role = roles.find(role => role.name === userInput.updateRole);
+        const roleId = role ? role.id : null;
+
+        const [updatedResults, updatedFields] = await db.query(
+            'UPDATE employee SET role_id = ? WHERE CONCAT(first_name, " ", last_name) = ?',
+            [roleId, userInput.updateEmp]
+        );
+
+        console.log('Role successfully updated');
+    
+    } catch (err) {
+        console.error(err);
+    } finally {
+        db.release();
+    }
+
+}
+
 // to produce an array of manager choices for use when adding a new employee
 async function getManagers(db) {
     const [managers, managerFields] = await db.query(
@@ -362,6 +343,25 @@ async function getManagers(db) {
     return managers;
 }
 
+// to produce an array of employee choices for use when updating an employee's role
+async function getEmployees(db) {
+    const [employees, employeeFields] = await db.query(
+        'SELECT id, CONCAT(first_name, " ", last_name) AS full_name FROM employee'
+    );
+
+    return employees;
+}
+
+// to produce an array of role choices for use when updating an employee's role or adding a new employee
+async function getRoles(db) {
+    const [roles, roleFields] = await db.query(
+        'SELECT id, title AS name FROM role'
+    );
+
+    return roles;
+}
+
+// Runs the functional queries based on the user's inquirer responses
 async function generateQueries(response, db) {
     try {
         if (response.action === 'View all departments') {
@@ -381,7 +381,10 @@ async function generateQueries(response, db) {
 
         } else if (response.action === 'Add an employee') {
             await addEmployee();
-        } 
+
+        } else if (response.action === 'Update an employee role') {
+            await updateRole();
+        }
     } catch (err) {
         console.error('Error executing query:', err);
     } finally {
